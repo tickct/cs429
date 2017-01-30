@@ -3,12 +3,14 @@ import re
 import os
 import collections
 import time
+import timeit
 
 class index:
 	def __init__(self,path):
                self.path=path
                self.fileDic=self.getFiles();
-               self.lookupIndex={}
+               #using defaultdict saves us .05 sec build time
+               self.lookupIndex=collections.defaultdict(list)
 	def buildIndex(self):
                 for id,inputFile in self.fileDic.iteritems():
                         file = open(self.path+"/"+inputFile,"r")
@@ -16,12 +18,8 @@ class index:
                         cleanText=self.sanitizeAndTokenizeString(text)
                         fileIndex=self.getFileIndex(cleanText)
                         for word,locations in fileIndex.iteritems():
-                                #since we are creating a dic per file first we dont need
-                                #to worry about duplicate id's
-                                if word in self.lookupIndex:
-                                        self.lookupIndex[word].append((id,locations))
-                                else:
-                                        self.lookupIndex[word]=[(id,locations)]
+                                #since we are creating a dic per file first we dont need to worry about duplicate id's
+                                self.lookupIndex[word].append((id,locations))
         def getFileIndex(self,cleanText):
                 locationInFile=1
                 oneFileIndex={}
@@ -60,6 +58,9 @@ class index:
 
 	#def print_doc_list(self):
 	# function to print the documents and their document id
+start=time.clock()
 collection = index("collection")
 collection.buildIndex()
-collection.fPrint()
+indexBuildTime=time.clock()-start
+print timeit.timeit(collection.buildIndex)
+print "collection built in :",indexBuildTime
